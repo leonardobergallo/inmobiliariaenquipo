@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Inmobiliaria en Equipo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .filters select {
+            min-width: 150px;
+        }
+
+        .filters input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .leads-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-nuevo {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-calificado {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge-en_seguimiento {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-derivado {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .badge-interes {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .lead-detail {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .lead-detail strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👨‍💼 Panel de Administración</h1>
+        <p>Gestión de Consultas y Leads - Inmobiliaria en Equipo</p>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Total de Consultas</h3>
+                <div class="number" id="totalLeads">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Nuevas</h3>
+                <div class="number" id="nuevosLeads">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Calificadas</h3>
+                <div class="number" id="calificadosLeads">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>En Seguimiento</h3>
+                <div class="number" id="seguimientoLeads">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Derivadas</h3>
+                <div class="number" id="derivadosLeads">0</div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <select id="filterEstado">
+                <option value="">Todos los estados</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="calificado">Calificado</option>
+                <option value="en_seguimiento">En Seguimiento</option>
+                <option value="derivado">Derivado</option>
+            </select>
+            <select id="filterInteres">
+                <option value="">Todos los intereses</option>
+                <option value="alquilar">Alquilar</option>
+                <option value="comprar">Comprar</option>
+                <option value="vender">Vender</option>
+                <option value="tasacion">Tasación</option>
+                <option value="contacto">Contacto</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Buscar por nombre, teléfono o zona...">
+            <button class="btn btn-primary" onclick="loadLeads()">🔍 Buscar</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">🔄 Limpiar</button>
+        </div>
+
+        <!-- Tabla de Leads -->
+        <div class="leads-table">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Cargando consultas...</p>
+            </div>
+            <table id="leadsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Interés</th>
+                        <th>Zona</th>
+                        <th>Presupuesto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalles de la Consulta</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        // Cargar leads al iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLeads();
+            // Auto-refresh cada 30 segundos
+            setInterval(loadLeads, 30000);
+        });
+
+        // Cargar leads desde la API
+        async function loadLeads() {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('leadsTable');
+            
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const estado = document.getElementById('filterEstado').value;
+                const interes = document.getElementById('filterInteres').value;
+                
+                let url = `${API_BASE}/api/admin/leads`;
+                if (estado) {
+                    url = `${API_BASE}/api/admin/leads/estado/${estado}`;
+                } else if (interes) {
+                    url = `${API_BASE}/api/admin/leads/interes/${interes}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let leads = data.leads || [];
+
+                // Filtrar por búsqueda de texto
+                const searchText = document.getElementById('searchInput').value.toLowerCase();
+                if (searchText) {
+                    leads = leads.filter(lead => 
+                        (lead.nombre && lead.nombre.toLowerCase().includes(searchText)) ||
+                        (lead.telefono && lead.telefono.includes(searchText)) ||
+                        (lead.zona && lead.zona.toLowerCase().includes(searchText))
+                    );
+                }
+
+                // Ordenar por fecha más reciente
+                leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                displayLeads(leads);
+                updateStats(leads);
+            } catch (error) {
+                console.error('Error cargando leads:', error);
+                alert('Error al cargar las consultas. Verifica que el servidor esté corriendo.');
+            } finally {
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            }
+        }
+
+        // Mostrar leads en la tabla
+        function displayLeads(leads) {
+            const tbody = document.getElementById('leadsTableBody');
+            tbody.innerHTML = '';
+
+            if (leads.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #666;">No hay consultas disponibles</td></tr>';
+                return;
+            }
+
+            leads.forEach(lead => {
+                const row = document.createElement('tr');
+                
+                const fecha = new Date(lead.createdAt).toLocaleString('es-AR');
+                const nombre = lead.nombre || 'Sin nombre';
+                const telefono = lead.telefono || lead.whatsapp || 'Sin teléfono';
+                const interes = lead.interes || 'contacto';
+                const zona = lead.zona || 'No especificada';
+                
+                // Formatear presupuesto
+                let presupuesto = 'No especificado';
+                if (lead.presupuesto) {
+                    const moneda = lead.presupuestoMoneda || 'pesos';
+                    if (moneda === 'dolares') {
+                        presupuesto = `USD ${lead.presupuesto.toLocaleString('es-AR')}`;
+                    } else {
+                        presupuesto = `$${lead.presupuesto.toLocaleString('es-AR')}`;
+                    }
+                }
+
+                row.innerHTML = `
+                    <td>${fecha}</td>
+                    <td>${nombre}</td>
+                    <td>${telefono}</td>
+                    <td><span class="badge badge-interes">${interes}</span></td>
+                    <td>${zona}</td>
+                    <td>${presupuesto}</td>
+                    <td><span class="badge badge-${lead.estado || 'nuevo'}">${lead.estado || 'nuevo'}</span></td>
+                    <td class="actions">
+                        <button class="btn btn-primary btn-small" onclick="viewLead('${lead.id}')">Ver</button>
+                        <button class="btn btn-secondary btn-small" onclick="updateLeadStatus('${lead.id}')">Actualizar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Actualizar estadísticas
+        function updateStats(leads) {
+            document.getElementById('totalLeads').textContent = leads.length;
+            document.getElementById('nuevosLeads').textContent = leads.filter(l => l.estado === 'nuevo').length;
+            document.getElementById('calificadosLeads').textContent = leads.filter(l => l.estado === 'calificado').length;
+            document.getElementById('seguimientoLeads').textContent = leads.filter(l => l.estado === 'en_seguimiento').length;
+            document.getElementById('derivadosLeads').textContent = leads.filter(l => l.estado === 'derivado').length;
+        }
+
+        // Ver detalles de un lead
+        async function viewLead(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/leads/${id}`);
+                const data = await response.json();
+                const lead = data.lead;
+
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    <div class="lead-detail">
+                        <p><strong>ID:</strong> ${lead.id}</p>
+                        <p><strong>Fecha:</strong> ${new Date(lead.createdAt).toLocaleString('es-AR')}</p>
+                        <p><strong>Estado:</strong> <span class="badge badge-${lead.estado}">${lead.estado}</span></p>
+                        <p><strong>Canal:</strong> ${lead.canal}</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre:</label>
+                        <input type="text" value="${lead.nombre || ''}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" value="${lead.telefono || lead.whatsapp || ''}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Interés:</label>
+                        <input type="text" value="${lead.interes || ''}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Zona:</label>
+                        <input type="text" value="${lead.zona || ''}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Propiedad:</label>
+                        <input type="text" value="${lead.tipoPropiedad || ''}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Presupuesto:</label>
+                        <input type="text" value="${lead.presupuesto ? (lead.presupuestoMoneda === 'dolares' ? 'USD ' : '$') + lead.presupuesto.toLocaleString('es-AR') : 'No especificado'}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Dormitorios:</label>
+                        <input type="text" value="${lead.dormitorios || 'No especificado'}" readonly>
+                    </div>
+                    ${lead.notas ? `<div class="form-group"><label>Notas:</label><textarea readonly>${lead.notas}</textarea></div>` : ''}
+                `;
+
+                document.getElementById('detailModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error cargando lead:', error);
+                alert('Error al cargar los detalles de la consulta.');
+            }
+        }
+
+        // Actualizar estado de un lead
+        async function updateLeadStatus(id) {
+            const nuevoEstado = prompt('Ingrese el nuevo estado (nuevo, calificado, en_seguimiento, derivado):');
+            if (!nuevoEstado) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/leads/${id}/estado`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+
+                if (response.ok) {
+                    alert('Estado actualizado correctamente');
+                    loadLeads();
+                } else {
+                    alert('Error al actualizar el estado');
+                }
+            } catch (error) {
+                console.error('Error actualizando estado:', error);
+                alert('Error al actualizar el estado');
+            }
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer click fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Resetear filtros
+        function resetFilters() {
+            document.getElementById('filterEstado').value = '';
+            document.getElementById('filterInteres').value = '';
+            document.getElementById('searchInput').value = '';
+            loadLeads();
+        }
+
+        // Buscar al presionar Enter
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loadLeads();
+            }
+        });
+    </script>
+</body>
+</html>
+
