@@ -206,7 +206,13 @@
     <script>
         // Variables globales
         let sessionId = null;
-        const API_BASE = 'http://localhost:3000';
+        // Detectar automáticamente la URL del servidor
+        let API_BASE = '';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            API_BASE = 'http://localhost:3000';
+        } else {
+            API_BASE = `${window.location.protocol}//${window.location.host}`;
+        }
 
         // Inicializar sesión al cargar la página
         async function initSession() {
