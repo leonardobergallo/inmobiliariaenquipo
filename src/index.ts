@@ -255,27 +255,47 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // ============================================
-// INICIAR SERVIDOR
+// INICIALIZACIÓN DE BASE DE DATOS
 // ============================================
 
-async function startServer() {
-  // Inicializar base de datos
+// Inicializar base de datos al cargar el módulo
+let dbInitialized = false;
+(async () => {
   console.log('🔄 Inicializando base de datos...');
-  const dbInitialized = await initializeDatabase();
+  dbInitialized = await initializeDatabase();
   
   if (!dbInitialized) {
     console.error('❌ Error inicializando base de datos. El servidor puede no funcionar correctamente.');
+  } else {
+    console.log('✅ Base de datos inicializada correctamente');
+  }
+})().catch(console.error);
+
+// ============================================
+// INICIAR SERVIDOR (solo si no es Vercel)
+// ============================================
+
+// Solo iniciar servidor si no estamos en Vercel (serverless)
+if (process.env.VERCEL !== '1' && require.main === module) {
+  async function startServer() {
+    // Esperar a que la base de datos se inicialice
+    while (!dbInitialized) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Chatbot inmobiliario iniciado en puerto ${PORT}`);
+      console.log(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
+      console.log(`🌐 Web API: http://localhost:${PORT}/api/web/chat`);
+      console.log(`📲 App API: http://localhost:${PORT}/api/app/chat`);
+      console.log(`👨‍💼 Admin API: http://localhost:${PORT}/api/admin/leads`);
+      console.log(`🖥️  Panel Admin: http://localhost:${PORT}/admin.html`);
+    });
   }
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Chatbot inmobiliario iniciado en puerto ${PORT}`);
-    console.log(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
-    console.log(`🌐 Web API: http://localhost:${PORT}/api/web/chat`);
-    console.log(`📲 App API: http://localhost:${PORT}/api/app/chat`);
-    console.log(`👨‍💼 Admin API: http://localhost:${PORT}/api/admin/leads`);
-    console.log(`🖥️  Panel Admin: http://localhost:${PORT}/admin.html`);
-  });
+  startServer().catch(console.error);
 }
 
-startServer().catch(console.error);
+// Exportar la app para Vercel
+export default app;
 

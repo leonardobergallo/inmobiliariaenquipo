@@ -387,8 +387,14 @@
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'http://localhost:3000';
+           <script>
+               // Detectar automáticamente la URL del servidor
+               let API_BASE = '';
+               if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                   API_BASE = 'http://localhost:3000';
+               } else {
+                   API_BASE = `${window.location.protocol}//${window.location.host}`;
+               }
 
         // Cargar leads al iniciar
         window.addEventListener('DOMContentLoaded', () => {
