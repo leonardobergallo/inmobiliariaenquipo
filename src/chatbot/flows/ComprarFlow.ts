@@ -16,45 +16,84 @@ export class ComprarFlow extends BaseFlow {
   getFlowSteps(): FlowStep[] {
     return [
       {
-        question: '📍 ¿En qué zona o barrio te gustaría comprar?',
+        question: '📍 ¿En qué zona o barrio te gustaría comprar?\n\n1. Centro\n2. Candiotti\n3. Barranquitas\n4. San Martín\n5. Villa María Selva\n6. Barrio Sur\n7. Barrio Norte\n8. Otra zona (escribir)',
         field: 'zona',
+        options: ['1', '2', '3', '4', '5', '6', '7', '8'],
+        buttons: [
+          { label: '1. Centro', value: 'Centro' },
+          { label: '2. Candiotti', value: 'Candiotti' },
+          { label: '3. Barranquitas', value: 'Barranquitas' },
+          { label: '4. San Martín', value: 'San Martín' },
+          { label: '5. Villa María Selva', value: 'Villa María Selva' },
+          { label: '6. Barrio Sur', value: 'Barrio Sur' },
+          { label: '7. Barrio Norte', value: 'Barrio Norte' },
+          { label: '8. Otra zona', value: 'otra' },
+        ],
         validation: (value) => {
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'Centro',
+            '2': 'Candiotti',
+            '3': 'Barranquitas',
+            '4': 'San Martín',
+            '5': 'Villa María Selva',
+            '6': 'Barrio Sur',
+            '7': 'Barrio Norte',
+          };
+          // Si es un número válido o es "otra", aceptar
+          if (numberMap[lower] || lower === 'otra' || lower === '8') {
+            return true;
+          }
+          // Si no es un número, validar que tenga al menos 2 caracteres
           if (!value || value.trim().length < 2) {
-            return 'Por favor, ingresa una zona válida (mínimo 2 caracteres).';
+            return 'Por favor, selecciona 1-8 o escribe una zona válida (mínimo 2 caracteres).';
           }
           return true;
         },
       },
       {
-        question: '🏠 ¿Qué tipo de propiedad buscás?',
+        question: '🏠 ¿Qué tipo de propiedad buscás?\n\n1. 🏢 Departamento\n2. 🏡 Casa\n3. 🏪 Local\n4. 🏢 Oficina',
         field: 'tipoPropiedad',
-        options: ['departamento', 'casa', 'local', 'oficina'],
+        options: ['1', '2', '3', '4', 'departamento', 'casa', 'local', 'oficina'],
         buttons: [
-          { label: '🏢 Departamento', value: 'departamento' },
-          { label: '🏡 Casa', value: 'casa' },
-          { label: '🏪 Local', value: 'local' },
-          { label: '🏢 Oficina', value: 'oficina' },
+          { label: '1. 🏢 Departamento', value: 'departamento' },
+          { label: '2. 🏡 Casa', value: 'casa' },
+          { label: '3. 🏪 Local', value: 'local' },
+          { label: '4. 🏢 Oficina', value: 'oficina' },
         ],
         validation: (value) => {
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'departamento',
+            '2': 'casa',
+            '3': 'local',
+            '4': 'oficina',
+          };
+          const mappedValue = numberMap[lower] || lower;
           const validTypes = ['departamento', 'casa', 'local', 'oficina'];
-          if (!validTypes.includes(value.toLowerCase())) {
-            return 'Por favor, selecciona: departamento, casa, local u oficina.';
+          if (!validTypes.includes(mappedValue)) {
+            return 'Por favor, selecciona 1, 2, 3 o 4, o escribe: departamento, casa, local u oficina.';
           }
           return true;
         },
       },
       {
-        question: '💰 ¿En qué moneda es tu presupuesto?',
+        question: '💰 ¿En qué moneda es tu presupuesto?\n\n1. 💵 Pesos ($)\n2. 💲 Dólares (USD)',
         field: 'presupuestoMoneda',
-        options: ['pesos', 'dolares'],
+        options: ['1', '2', 'pesos', 'dolares'],
         buttons: [
-          { label: '💵 Pesos ($)', value: 'pesos' },
-          { label: '💲 Dólares (USD)', value: 'dolares' },
+          { label: '1. 💵 Pesos ($)', value: 'pesos' },
+          { label: '2. 💲 Dólares (USD)', value: 'dolares' },
         ],
         validation: (value) => {
-          const lower = value.toLowerCase();
-          if (!['pesos', 'dolares', 'peso', 'dolar', 'usd', '$'].includes(lower)) {
-            return 'Por favor, selecciona Pesos o Dólares.';
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'pesos',
+            '2': 'dolares',
+          };
+          const mappedValue = numberMap[lower] || lower;
+          if (!['pesos', 'dolares', 'peso', 'dolar', 'usd', '$'].includes(mappedValue)) {
+            return 'Por favor, selecciona 1 (Pesos) o 2 (Dólares).';
           }
           return true;
         },
@@ -83,73 +122,82 @@ export class ComprarFlow extends BaseFlow {
         },
       },
       {
-        question: '🛏️ ¿Cuántos dormitorios necesitás?',
+        question: '🛏️ ¿Cuántos dormitorios necesitás?\n\n1. 1 dormitorio\n2. 2 dormitorios\n3. 3 dormitorios\n4. 4 dormitorios\n5. 5 o más',
         field: 'dormitorios',
-        options: ['1', '2', '3', '4', '5+'],
+        options: ['1', '2', '3', '4', '5'],
         buttons: [
-          { label: '1', value: '1' },
-          { label: '2', value: '2' },
-          { label: '3', value: '3' },
-          { label: '4', value: '4' },
-          { label: '5+', value: '5' },
+          { label: '1. 1 dormitorio', value: '1' },
+          { label: '2. 2 dormitorios', value: '2' },
+          { label: '3. 3 dormitorios', value: '3' },
+          { label: '4. 4 dormitorios', value: '4' },
+          { label: '5. 5 o más', value: '5' },
         ],
         validation: (value) => {
           const num = parseInt(value.replace(/\D/g, ''), 10);
           if (isNaN(num) || num < 1 || num > 10) {
-            return 'Por favor, ingresa un número válido de dormitorios (1-10).';
+            return 'Por favor, selecciona 1, 2, 3, 4 o 5, o escribe un número de dormitorios (1-10).';
           }
           return true;
         },
       },
       {
-        question: '🏠 ¿Es tu primera vivienda? (Sí/No)',
+        question: '🏠 ¿Es tu primera vivienda?\n\n1. Sí\n2. No',
         field: 'esPrimeraVivienda',
+        options: ['1', '2', 'si', 'no', 'sí', 's', 'n'],
         buttons: [
-          { label: 'Sí', value: 'si' },
-          { label: 'No', value: 'no' },
+          { label: '1. Sí', value: 'si' },
+          { label: '2. No', value: 'no' },
         ],
         validation: (value) => {
-          const lower = value.toLowerCase();
-          if (!['sí', 'si', 's', 'no', 'n'].includes(lower)) {
-            return 'Por favor, responde Sí o No.';
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'si',
+            '2': 'no',
+          };
+          const mappedValue = numberMap[lower] || lower;
+          if (!['sí', 'si', 's', 'no', 'n'].includes(mappedValue)) {
+            return 'Por favor, selecciona 1 (Sí) o 2 (No).';
           }
           return true;
         },
       },
       {
-        question: '💳 ¿Vas a comprar con crédito hipotecario? (Sí/No)',
+        question: '💳 ¿Vas a comprar con crédito hipotecario?\n\n1. Sí\n2. No',
         field: 'compraConCredito',
+        options: ['1', '2', 'si', 'no', 'sí', 's', 'n'],
         buttons: [
-          { label: 'Sí', value: 'si' },
-          { label: 'No', value: 'no' },
+          { label: '1. Sí', value: 'si' },
+          { label: '2. No', value: 'no' },
         ],
         validation: (value) => {
-          const lower = value.toLowerCase();
-          if (!['sí', 'si', 's', 'no', 'n'].includes(lower)) {
-            return 'Por favor, responde Sí o No.';
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'si',
+            '2': 'no',
+          };
+          const mappedValue = numberMap[lower] || lower;
+          if (!['sí', 'si', 's', 'no', 'n'].includes(mappedValue)) {
+            return 'Por favor, selecciona 1 (Sí) o 2 (No).';
           }
           return true;
         },
       },
       {
-        question: '📞 ¿Cuál es tu nombre y teléfono? (ej: "María, 11-1234-5678" o "342-5089-906")',
+        question: '👤 ¿Cuál es tu nombre?',
         field: 'nombre',
         validation: (value) => {
-          if (!value || value.trim().length < 3) {
-            return 'Por favor, ingresa tu nombre y teléfono.';
+          if (!value || value.trim().length < 2) {
+            return 'Por favor, ingresa tu nombre (mínimo 2 caracteres).';
           }
-          // Patrón más flexible para teléfonos argentinos
-          // Acepta: 11-1234-5678, 342-5089-906, 3425089906, etc.
-          const phoneMatch = value.match(/(\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4})/);
-          if (phoneMatch) {
-            return true;
-          }
-          // También aceptar solo números si tiene al menos 8 dígitos
-          const digitsOnly = value.replace(/\D/g, '');
-          if (digitsOnly.length >= 8) {
-            return true;
-          }
-          return 'Por favor, incluye un teléfono válido (ej: 342-5089-906 o 11-1234-5678).';
+          return true;
+        },
+      },
+      {
+        question: '📞 ¿Cuál es tu teléfono?',
+        field: 'telefono',
+        validation: (value) => {
+          // Aceptar cualquier valor
+          return true;
         },
       },
     ];
@@ -185,31 +233,60 @@ export class ComprarFlow extends BaseFlow {
   protected saveStepData(data: Partial<Lead>, field: keyof Lead, value: string): Partial<Lead> {
     const updated = super.saveStepData(data, field, value);
 
-    // Extraer nombre y teléfono del campo nombre
-    if (field === 'nombre') {
-      // Patrón más flexible para teléfonos
-      const phoneMatch = value.match(/(\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4})/);
-      if (phoneMatch) {
-        updated.telefono = phoneMatch[1].replace(/\D/g, '');
-        updated.whatsapp = updated.telefono;
-        const namePart = value.substring(0, phoneMatch.index).trim();
-        if (namePart) {
-          updated.nombre = namePart;
-        }
-      } else {
-        // Si no hay match con guiones, buscar solo números
-        const digitsOnly = value.replace(/\D/g, '');
-        if (digitsOnly.length >= 8) {
-          updated.telefono = digitsOnly;
-          updated.whatsapp = digitsOnly;
-          // Intentar extraer nombre (todo antes de los números)
-          const nameMatch = value.match(/^([^\d]+)/);
-          if (nameMatch) {
-            updated.nombre = nameMatch[1].trim();
-          }
-        } else {
-          updated.nombre = value;
-        }
+    // Mapear números a valores para campos con opciones
+    if (field === 'zona') {
+      const numberMap: Record<string, string> = {
+        '1': 'Centro',
+        '2': 'Candiotti',
+        '3': 'Barranquitas',
+        '4': 'San Martín',
+        '5': 'Villa María Selva',
+        '6': 'Barrio Sur',
+        '7': 'Barrio Norte',
+      };
+      if (numberMap[value]) {
+        updated.zona = numberMap[value];
+        return updated;
+      }
+      // Si es "otra" o "8", no hacer nada, dejar que el usuario escriba
+      if (value.toLowerCase() === 'otra' || value === '8') {
+        // No actualizar, esperar siguiente mensaje
+        return updated;
+      }
+    }
+    
+    if (field === 'tipoPropiedad') {
+      const numberMap: Record<string, string> = {
+        '1': 'departamento',
+        '2': 'casa',
+        '3': 'local',
+        '4': 'oficina',
+      };
+      if (numberMap[value]) {
+        updated.tipoPropiedad = numberMap[value] as any;
+        return updated;
+      }
+    }
+    
+    if (field === 'presupuestoMoneda') {
+      const numberMap: Record<string, string> = {
+        '1': 'pesos',
+        '2': 'dolares',
+      };
+      if (numberMap[value]) {
+        updated.presupuestoMoneda = numberMap[value] as any;
+        return updated;
+      }
+    }
+    
+    if (field === 'esPrimeraVivienda' || field === 'compraConCredito') {
+      const numberMap: Record<string, boolean> = {
+        '1': true,
+        '2': false,
+      };
+      if (numberMap[value] !== undefined) {
+        updated[field] = numberMap[value] as any;
+        return updated;
       }
     }
 
@@ -217,48 +294,68 @@ export class ComprarFlow extends BaseFlow {
   }
 
   protected async handleCompletion(userId: string, state: ChatState): Promise<BotResponse> {
-    const lead = LeadModel.create(state.data, 'whatsapp');
-    lead.interes = 'comprar';
-    lead.estado = 'calificado'; // Compras son leads calificados automáticamente
-    
-    await LeadStorage.save(lead);
-
-    if (this.shouldSearchProperties(lead)) {
-      const properties = await this.searchProperties(lead);
+    try {
+      console.log('🔄 [ComprarFlow] Iniciando handleCompletion');
+      console.log('📊 [ComprarFlow] Datos del estado:', JSON.stringify(state.data, null, 2));
       
-      if (properties && properties.length > 0) {
-        const { PropertySearchService } = require('../../services/PropertySearchService');
-        const searchService = new PropertySearchService();
-        const propertiesMessage = searchService.formatPropertiesForClient(properties);
-        
-        await ChatStateManager.updateState(userId, { completed: true });
-        return {
-          text: this.getCompletionMessage(lead) + propertiesMessage,
-          buttons: [
-            { label: 'Sí, hablame un asesor', value: 'contacto' },
-            { label: 'Ver más opciones', value: 'mas_opciones' },
-            { label: 'No, gracias', value: 'no_contacto' },
-          ],
-        };
-      } else {
-        await ChatStateManager.updateState(userId, { completed: true });
-        return {
-          text: this.getCompletionMessage(lead) + 
-                `❌ No encontré propiedades disponibles en este momento.\n\n` +
-                `💡 ¿Querés que un *asesor te contacte* para ayudarte a encontrar lo que buscás?`,
-          buttons: [
-            { label: 'Sí, contactame', value: 'contacto' },
-            { label: 'No, gracias', value: 'no_contacto' },
-          ],
-        };
-      }
-    }
+      const lead = LeadModel.create(state.data, 'whatsapp');
+      lead.interes = 'comprar';
+      lead.estado = 'calificado'; // Compras son leads calificados automáticamente
+      
+      console.log('✅ [ComprarFlow] Lead creado:', JSON.stringify(lead, null, 2));
+      console.log('💾 [ComprarFlow] Guardando lead en base de datos...');
+      
+      await LeadStorage.save(lead);
+      
+      console.log('✅ [ComprarFlow] Lead guardado correctamente');
 
-    await ChatStateManager.updateState(userId, { completed: true });
-    return {
-      text: this.getCompletionMessage(lead) + 
-            '\n\n👤 Un asesor se pondrá en contacto contigo pronto.',
-    };
+      if (this.shouldSearchProperties(lead)) {
+        console.log('🔍 [ComprarFlow] Buscando propiedades...');
+        const properties = await this.searchProperties(lead);
+        
+        if (properties && properties.length > 0) {
+          const { PropertySearchService } = require('../../services/PropertySearchService');
+          const searchService = new PropertySearchService();
+          const propertiesMessage = searchService.formatPropertiesForClient(properties);
+          
+          await ChatStateManager.updateState(userId, { completed: true });
+          return {
+            text: this.getCompletionMessage(lead) + propertiesMessage,
+            buttons: [
+              { label: 'Sí, hablame un asesor', value: 'contacto' },
+              { label: 'Ver más opciones', value: 'mas_opciones' },
+              { label: 'No, gracias', value: 'no_contacto' },
+            ],
+          };
+        } else {
+          await ChatStateManager.updateState(userId, { completed: true });
+          return {
+            text: this.getCompletionMessage(lead) + 
+                  `❌ No encontré propiedades disponibles en este momento.\n\n` +
+                  `💡 ¿Querés que un *asesor te contacte* para ayudarte a encontrar lo que buscás?`,
+            buttons: [
+              { label: 'Sí, contactame', value: 'contacto' },
+              { label: 'No, gracias', value: 'no_contacto' },
+            ],
+          };
+        }
+      }
+
+      await ChatStateManager.updateState(userId, { completed: true });
+      return {
+        text: this.getCompletionMessage(lead) + 
+              '\n\n👤 Un asesor se pondrá en contacto contigo pronto.',
+      };
+    } catch (error) {
+      console.error('❌ [ComprarFlow] Error en handleCompletion:', error);
+      if (error instanceof Error) {
+        console.error('❌ [ComprarFlow] Error message:', error.message);
+        console.error('❌ [ComprarFlow] Error stack:', error.stack);
+      }
+      return {
+        text: '❌ Ocurrió un error al completar tu solicitud. Por favor, intenta nuevamente o contacta con un asesor.',
+      };
+    }
   }
 }
 

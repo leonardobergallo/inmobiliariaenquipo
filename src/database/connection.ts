@@ -42,14 +42,15 @@ export async function testConnection(): Promise<boolean> {
 
 // Función para ejecutar queries
 export async function query(text: string, params?: any[]) {
-  const start = Date.now();
   try {
     const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
+    // Solo loggear queries si hay error o si DEBUG está activado
+    if (process.env.DEBUG_QUERIES === 'true') {
+      console.log('🔍 [DB Query]', { text: text.substring(0, 100), rows: res.rowCount });
+    }
     return res;
   } catch (error) {
-    console.error('Query error', { text, error });
+    console.error('❌ [DB Error] Query error:', { text: text.substring(0, 100), error });
     throw error;
   }
 }

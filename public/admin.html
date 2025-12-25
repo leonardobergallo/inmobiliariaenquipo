@@ -348,6 +348,7 @@
             <input type="text" id="searchInput" placeholder="Buscar por nombre, teléfono o zona...">
             <button class="btn btn-primary" onclick="loadLeads()">🔍 Buscar</button>
             <button class="btn btn-secondary" onclick="resetFilters()">🔄 Limpiar</button>
+            <button class="btn btn-primary" onclick="exportLeads()">📥 Exportar CSV</button>
         </div>
 
         <!-- Tabla de Leads -->
@@ -396,6 +397,9 @@
             setInterval(loadLeads, 30000);
         });
 
+        // Variable global para almacenar leads
+        let allLeads = [];
+
         // Cargar leads desde la API
         async function loadLeads() {
             const loading = document.getElementById('loading');
@@ -432,6 +436,9 @@
 
                 // Ordenar por fecha más reciente
                 leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                // Guardar leads globalmente para exportar
+                allLeads = leads;
 
                 displayLeads(leads);
                 updateStats(leads);
@@ -543,7 +550,27 @@
                         <label>Dormitorios:</label>
                         <input type="text" value="${lead.dormitorios || 'No especificado'}" readonly>
                     </div>
-                    ${lead.notas ? `<div class="form-group"><label>Notas:</label><textarea readonly>${lead.notas}</textarea></div>` : ''}
+                    ${lead.fechaIngreso ? `<div class="form-group"><label>Fecha de Ingreso:</label><input type="text" value="${lead.fechaIngreso}" readonly></div>` : ''}
+                    ${lead.esPrimeraVivienda !== undefined ? `<div class="form-group"><label>Primera Vivienda:</label><input type="text" value="${lead.esPrimeraVivienda ? 'Sí' : 'No'}" readonly></div>` : ''}
+                    ${lead.compraConCredito !== undefined ? `<div class="form-group"><label>Compra con Crédito:</label><input type="text" value="${lead.compraConCredito ? 'Sí' : 'No'}" readonly></div>` : ''}
+                    ${lead.direccion ? `<div class="form-group"><label>Dirección:</label><input type="text" value="${lead.direccion}" readonly></div>` : ''}
+                    ${lead.metrosCuadrados ? `<div class="form-group"><label>Metros Cuadrados:</label><input type="text" value="${lead.metrosCuadrados} m²" readonly></div>` : ''}
+                    ${lead.estadoPropiedad ? `<div class="form-group"><label>Estado de la Propiedad:</label><input type="text" value="${lead.estadoPropiedad}" readonly></div>` : ''}
+                    <div class="form-group">
+                        <label>Notas:</label>
+                        <textarea id="leadNotas" placeholder="Agregar notas sobre este lead...">${lead.notas || ''}</textarea>
+                        <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveNotas('${lead.id}')">💾 Guardar Notas</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Cambiar Estado:</label>
+                        <select id="leadEstado" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 5px;">
+                            <option value="nuevo" ${lead.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+                            <option value="calificado" ${lead.estado === 'calificado' ? 'selected' : ''}>Calificado</option>
+                            <option value="en_seguimiento" ${lead.estado === 'en_seguimiento' ? 'selected' : ''}>En Seguimiento</option>
+                            <option value="derivado" ${lead.estado === 'derivado' ? 'selected' : ''}>Derivado</option>
+                        </select>
+                        <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveEstado('${lead.id}')">💾 Actualizar Estado</button>
+                    </div>
                 `;
 
                 document.getElementById('detailModal').style.display = 'block';
@@ -558,25 +585,99 @@
             const nuevoEstado = prompt('Ingrese el nuevo estado (nuevo, calificado, en_seguimiento, derivado):');
             if (!nuevoEstado) return;
 
+            await saveEstado(id, nuevoEstado);
+        }
+
+        // Guardar estado desde el modal
+        async function saveEstado(id, estado = null) {
+            const estadoValue = estado || document.getElementById('leadEstado').value;
+            
             try {
                 const response = await fetch(`${API_BASE}/api/admin/leads/${id}/estado`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ estado: nuevoEstado })
+                    body: JSON.stringify({ estado: estadoValue })
                 });
 
                 if (response.ok) {
-                    alert('Estado actualizado correctamente');
+                    alert('✅ Estado actualizado correctamente');
                     loadLeads();
+                    if (document.getElementById('detailModal').style.display === 'block') {
+                        viewLead(id); // Recargar detalles
+                    }
                 } else {
-                    alert('Error al actualizar el estado');
+                    alert('❌ Error al actualizar el estado');
                 }
             } catch (error) {
                 console.error('Error actualizando estado:', error);
-                alert('Error al actualizar el estado');
+                alert('❌ Error al actualizar el estado');
             }
+        }
+
+        // Guardar notas
+        async function saveNotas(id) {
+            const notas = document.getElementById('leadNotas').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/leads/${id}/notas`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notas })
+                });
+
+                if (response.ok) {
+                    alert('✅ Notas guardadas correctamente');
+                    loadLeads();
+                } else {
+                    alert('❌ Error al guardar las notas');
+                }
+            } catch (error) {
+                console.error('Error guardando notas:', error);
+                alert('❌ Error al guardar las notas');
+            }
+        }
+
+        // Exportar leads a CSV
+        function exportLeads() {
+            if (allLeads.length === 0) {
+                alert('No hay datos para exportar. Carga los leads primero.');
+                return;
+            }
+
+            // Crear CSV con todos los datos
+            let csv = 'Fecha,Nombre,Teléfono,WhatsApp,Interés,Zona,Tipo Propiedad,Presupuesto,Moneda,Dormitorios,Estado,Canal\n';
+            
+            allLeads.forEach(lead => {
+                const fecha = new Date(lead.createdAt).toLocaleString('es-AR');
+                const nombre = (lead.nombre || '').replace(/"/g, '""');
+                const telefono = (lead.telefono || '').replace(/"/g, '""');
+                const whatsapp = (lead.whatsapp || '').replace(/"/g, '""');
+                const interes = (lead.interes || '').replace(/"/g, '""');
+                const zona = (lead.zona || '').replace(/"/g, '""');
+                const tipoPropiedad = (lead.tipoPropiedad || '').replace(/"/g, '""');
+                const presupuesto = lead.presupuesto || '';
+                const moneda = (lead.presupuestoMoneda || 'pesos').replace(/"/g, '""');
+                const dormitorios = lead.dormitorios || '';
+                const estado = (lead.estado || '').replace(/"/g, '""');
+                const canal = (lead.canal || '').replace(/"/g, '""');
+                
+                csv += `"${fecha}","${nombre}","${telefono}","${whatsapp}","${interes}","${zona}","${tipoPropiedad}","${presupuesto}","${moneda}","${dormitorios}","${estado}","${canal}"\n`;
+            });
+
+            // Descargar
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `leads_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // Cerrar modal
@@ -609,4 +710,5 @@
     </script>
 </body>
 </html>
+
 

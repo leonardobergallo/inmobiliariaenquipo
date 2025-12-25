@@ -91,6 +91,17 @@ export async function initializeDatabase(): Promise<boolean> {
        BEFORE UPDATE ON chat_states
        FOR EACH ROW
        EXECUTE FUNCTION update_updated_at_column()`,
+
+      // Migración: Agregar columna presupuesto_moneda si no existe
+      `DO $$ 
+       BEGIN 
+         IF NOT EXISTS (
+           SELECT 1 FROM information_schema.columns 
+           WHERE table_name = 'leads' AND column_name = 'presupuesto_moneda'
+         ) THEN
+           ALTER TABLE leads ADD COLUMN presupuesto_moneda VARCHAR(20);
+         END IF;
+       END $$`,
     ];
 
     // Ejecutar cada statement
@@ -103,9 +114,10 @@ export async function initializeDatabase(): Promise<boolean> {
         if (
           !errorMsg.includes('already exists') && 
           !errorMsg.includes('duplicate') &&
-          !errorMsg.includes('does not exist')
+          !errorMsg.includes('does not exist') &&
+          !errorMsg.includes('column') // Ignorar errores de columnas que ya existen
         ) {
-          console.warn('Warning executing statement:', errorMsg.substring(0, 150));
+          console.warn('⚠️ Warning executing statement:', errorMsg.substring(0, 150));
         }
       }
     }

@@ -13,29 +13,62 @@ export class AlquilarFlow extends BaseFlow {
   getFlowSteps(): FlowStep[] {
     return [
       {
-        question: '📍 ¿En qué zona o barrio te gustaría alquilar?',
+        question: '📍 ¿En qué zona o barrio te gustaría alquilar?\n\n1. Centro\n2. Candiotti\n3. Barranquitas\n4. San Martín\n5. Villa María Selva\n6. Barrio Sur\n7. Barrio Norte\n8. Otra zona (escribir)',
         field: 'zona',
+        options: ['1', '2', '3', '4', '5', '6', '7', '8'],
+        buttons: [
+          { label: '1. Centro', value: 'Centro' },
+          { label: '2. Candiotti', value: 'Candiotti' },
+          { label: '3. Barranquitas', value: 'Barranquitas' },
+          { label: '4. San Martín', value: 'San Martín' },
+          { label: '5. Villa María Selva', value: 'Villa María Selva' },
+          { label: '6. Barrio Sur', value: 'Barrio Sur' },
+          { label: '7. Barrio Norte', value: 'Barrio Norte' },
+          { label: '8. Otra zona', value: 'otra' },
+        ],
         validation: (value) => {
+          const lower = value.toLowerCase().trim();
+          const numberMap: Record<string, string> = {
+            '1': 'Centro',
+            '2': 'Candiotti',
+            '3': 'Barranquitas',
+            '4': 'San Martín',
+            '5': 'Villa María Selva',
+            '6': 'Barrio Sur',
+            '7': 'Barrio Norte',
+          };
+          if (numberMap[lower] || lower === 'otra' || lower === '8') {
+            return true;
+          }
           if (!value || value.trim().length < 2) {
-            return 'Por favor, ingresa una zona válida (mínimo 2 caracteres).';
+            return 'Por favor, selecciona 1-8 o escribe una zona válida (mínimo 2 caracteres).';
           }
           return true;
         },
       },
       {
-        question: '🏠 ¿Qué tipo de propiedad buscás?',
+        question: '🏠 ¿Qué tipo de propiedad buscás?\n\n1. 🏢 Departamento\n2. 🏡 Casa\n3. 🏪 Local\n4. 🏢 Oficina',
         field: 'tipoPropiedad',
-        options: ['departamento', 'casa', 'local', 'oficina'],
+        options: ['1', '2', '3', '4', 'departamento', 'casa', 'local', 'oficina'],
         buttons: [
-          { label: '🏢 Departamento', value: 'departamento' },
-          { label: '🏡 Casa', value: 'casa' },
-          { label: '🏪 Local', value: 'local' },
-          { label: '🏢 Oficina', value: 'oficina' },
+          { label: '1. 🏢 Departamento', value: 'departamento' },
+          { label: '2. 🏡 Casa', value: 'casa' },
+          { label: '3. 🏪 Local', value: 'local' },
+          { label: '4. 🏢 Oficina', value: 'oficina' },
         ],
         validation: (value) => {
+          const lower = value.toLowerCase().trim();
+          // Mapear números a valores
+          const numberMap: Record<string, string> = {
+            '1': 'departamento',
+            '2': 'casa',
+            '3': 'local',
+            '4': 'oficina',
+          };
+          const mappedValue = numberMap[lower] || lower;
           const validTypes = ['departamento', 'casa', 'local', 'oficina'];
-          if (!validTypes.includes(value.toLowerCase())) {
-            return 'Por favor, selecciona: departamento, casa, local u oficina.';
+          if (!validTypes.includes(mappedValue)) {
+            return 'Por favor, selecciona 1, 2, 3 o 4, o escribe: departamento, casa, local u oficina.';
           }
           return true;
         },
@@ -52,20 +85,20 @@ export class AlquilarFlow extends BaseFlow {
         },
       },
       {
-        question: '🛏️ ¿Cuántos dormitorios necesitás?',
+        question: '🛏️ ¿Cuántos dormitorios necesitás?\n\n1. 1 dormitorio\n2. 2 dormitorios\n3. 3 dormitorios\n4. 4 dormitorios\n5. 5 o más',
         field: 'dormitorios',
-        options: ['1', '2', '3', '4', '5+'],
+        options: ['1', '2', '3', '4', '5'],
         buttons: [
-          { label: '1', value: '1' },
-          { label: '2', value: '2' },
-          { label: '3', value: '3' },
-          { label: '4', value: '4' },
-          { label: '5+', value: '5' },
+          { label: '1. 1 dormitorio', value: '1' },
+          { label: '2. 2 dormitorios', value: '2' },
+          { label: '3. 3 dormitorios', value: '3' },
+          { label: '4. 4 dormitorios', value: '4' },
+          { label: '5. 5 o más', value: '5' },
         ],
         validation: (value) => {
           const num = parseInt(value.replace(/\D/g, ''), 10);
           if (isNaN(num) || num < 1 || num > 10) {
-            return 'Por favor, ingresa un número válido de dormitorios (1-10).';
+            return 'Por favor, selecciona 1, 2, 3, 4 o 5, o escribe un número de dormitorios (1-10).';
           }
           return true;
         },
@@ -81,24 +114,21 @@ export class AlquilarFlow extends BaseFlow {
         },
       },
       {
-        question: '📞 ¿Cuál es tu nombre y teléfono? (ej: "Juan, 11-1234-5678" o "342-5089-906")',
+        question: '👤 ¿Cuál es tu nombre?',
         field: 'nombre',
         validation: (value) => {
-          if (!value || value.trim().length < 3) {
-            return 'Por favor, ingresa tu nombre y teléfono.';
+          if (!value || value.trim().length < 2) {
+            return 'Por favor, ingresa tu nombre (mínimo 2 caracteres).';
           }
-          // Patrón más flexible para teléfonos argentinos
-          // Acepta: 11-1234-5678, 342-5089-906, 3425089906, etc.
-          const phoneMatch = value.match(/(\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4})/);
-          if (phoneMatch) {
-            return true;
-          }
-          // También aceptar solo números si tiene al menos 8 dígitos
-          const digitsOnly = value.replace(/\D/g, '');
-          if (digitsOnly.length >= 8) {
-            return true;
-          }
-          return 'Por favor, incluye un teléfono válido (ej: 342-5089-906 o 11-1234-5678).';
+          return true;
+        },
+      },
+      {
+        question: '📞 ¿Cuál es tu teléfono?',
+        field: 'telefono',
+        validation: (value) => {
+          // Aceptar cualquier valor
+          return true;
         },
       },
     ];
@@ -122,31 +152,36 @@ export class AlquilarFlow extends BaseFlow {
   protected saveStepData(data: Partial<Lead>, field: keyof Lead, value: string): Partial<Lead> {
     const updated = super.saveStepData(data, field, value);
 
-    // Extraer nombre y teléfono del campo nombre
-    if (field === 'nombre') {
-      // Patrón más flexible para teléfonos
-      const phoneMatch = value.match(/(\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4})/);
-      if (phoneMatch) {
-        updated.telefono = phoneMatch[1].replace(/\D/g, '');
-        updated.whatsapp = updated.telefono;
-        const namePart = value.substring(0, phoneMatch.index).trim();
-        if (namePart) {
-          updated.nombre = namePart;
-        }
-      } else {
-        // Si no hay match con guiones, buscar solo números
-        const digitsOnly = value.replace(/\D/g, '');
-        if (digitsOnly.length >= 8) {
-          updated.telefono = digitsOnly;
-          updated.whatsapp = digitsOnly;
-          // Intentar extraer nombre (todo antes de los números)
-          const nameMatch = value.match(/^([^\d]+)/);
-          if (nameMatch) {
-            updated.nombre = nameMatch[1].trim();
-          }
-        } else {
-          updated.nombre = value;
-        }
+    // Mapear números a valores para campos con opciones
+    if (field === 'zona') {
+      const numberMap: Record<string, string> = {
+        '1': 'Centro',
+        '2': 'Candiotti',
+        '3': 'Barranquitas',
+        '4': 'San Martín',
+        '5': 'Villa María Selva',
+        '6': 'Barrio Sur',
+        '7': 'Barrio Norte',
+      };
+      if (numberMap[value]) {
+        updated.zona = numberMap[value];
+        return updated;
+      }
+      if (value.toLowerCase() === 'otra' || value === '8') {
+        return updated;
+      }
+    }
+    
+    if (field === 'tipoPropiedad') {
+      const numberMap: Record<string, string> = {
+        '1': 'departamento',
+        '2': 'casa',
+        '3': 'local',
+        '4': 'oficina',
+      };
+      if (numberMap[value]) {
+        updated.tipoPropiedad = numberMap[value] as any;
+        return updated;
       }
     }
 

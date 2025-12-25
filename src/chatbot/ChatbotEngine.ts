@@ -181,13 +181,13 @@ export class ChatbotEngine {
    */
   getMainMenu(): BotResponse {
     return {
-      text: '👋 Hola, soy el asistente virtual de *Inmobiliaria en Equipo*\n\n¿En qué puedo ayudarte?',
+      text: '👋 Hola, soy el asistente virtual de *Inmobiliaria en Equipo*\n\n¿En qué puedo ayudarte?\n\n1. 🏠 Alquilar\n2. 🏡 Comprar\n3. 💰 Vender mi propiedad\n4. 📍 Tasación\n5. 📞 Hablar con un asesor',
       buttons: [
-        { label: '🏠 Alquilar', value: 'alquilar' },
-        { label: '🏡 Comprar', value: 'comprar' },
-        { label: '💰 Vender mi propiedad', value: 'vender' },
-        { label: '📍 Tasación', value: 'tasacion' },
-        { label: '📞 Hablar con un asesor', value: 'contacto' },
+        { label: '1. 🏠 Alquilar', value: 'alquilar' },
+        { label: '2. 🏡 Comprar', value: 'comprar' },
+        { label: '3. 💰 Vender mi propiedad', value: 'vender' },
+        { label: '4. 📍 Tasación', value: 'tasacion' },
+        { label: '5. 📞 Hablar con un asesor', value: 'contacto' },
       ],
       options: ['1', '2', '3', '4', '5'],
     };

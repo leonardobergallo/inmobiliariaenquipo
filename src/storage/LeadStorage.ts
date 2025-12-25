@@ -40,36 +40,43 @@ export class LeadStorage {
       RETURNING *
     `;
 
+    // Asegurar que todos los valores estén en el formato correcto
     const values = [
-      lead.id,
-      lead.nombre || null,
-      lead.telefono || null,
-      lead.whatsapp || null,
-      lead.interes,
-      lead.zona || null,
-      lead.tipoPropiedad || null,
-      lead.presupuesto || null,
-      lead.presupuestoMax || null,
-      lead.presupuestoMoneda || null,
-      lead.dormitorios || null,
-      lead.fechaIngreso || null,
-      lead.esPrimeraVivienda || null,
-      lead.compraConCredito || null,
-      lead.direccion || null,
-      lead.metrosCuadrados || null,
-      lead.estadoPropiedad || null,
-      lead.estado,
-      lead.canal,
-      lead.notas || null,
+      String(lead.id || ''),
+      lead.nombre ? String(lead.nombre).trim() : null,
+      lead.telefono ? String(lead.telefono).trim() : null,
+      lead.whatsapp ? String(lead.whatsapp).trim() : null,
+      String(lead.interes || 'contacto'),
+      lead.zona ? String(lead.zona).trim() : null,
+      lead.tipoPropiedad ? String(lead.tipoPropiedad) : null,
+      lead.presupuesto ? Number(lead.presupuesto) : null,
+      lead.presupuestoMax ? Number(lead.presupuestoMax) : null,
+      lead.presupuestoMoneda ? String(lead.presupuestoMoneda) : null,
+      lead.dormitorios ? Number(lead.dormitorios) : null,
+      lead.fechaIngreso ? String(lead.fechaIngreso).trim() : null,
+      lead.esPrimeraVivienda !== undefined ? Boolean(lead.esPrimeraVivienda) : null,
+      lead.compraConCredito !== undefined ? Boolean(lead.compraConCredito) : null,
+      lead.direccion ? String(lead.direccion).trim() : null,
+      lead.metrosCuadrados ? Number(lead.metrosCuadrados) : null,
+      lead.estadoPropiedad ? String(lead.estadoPropiedad).trim() : null,
+      String(lead.estado || 'nuevo'),
+      String(lead.canal || 'whatsapp'),
+      lead.notas ? String(lead.notas).trim() : null,
       lead.createdAt || new Date().toISOString(),
       lead.updatedAt || new Date().toISOString(),
     ];
 
     try {
+      console.log('💾 [LeadStorage] Guardando lead con valores:', JSON.stringify(values, null, 2));
       const result = await query(sql, values);
+      console.log('✅ [LeadStorage] Lead guardado correctamente');
       return this.mapRowToLead(result.rows[0]);
     } catch (error) {
-      console.error('Error saving lead:', error);
+      console.error('❌ [LeadStorage] Error saving lead:', error);
+      if (error instanceof Error) {
+        console.error('❌ [LeadStorage] Error message:', error.message);
+        console.error('❌ [LeadStorage] Error stack:', error.stack);
+      }
       throw error;
     }
   }

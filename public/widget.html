@@ -3,54 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Inmobiliaria - Prueba</title>
+    <title>Chatbot Widget - Inmobiliaria en Equipo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .chat-container {
+        /* Estilos para el widget flotante */
+        .chatbot-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 380px;
+            height: 600px;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 40px);
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 600px;
-            height: 80vh;
-            display: flex;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: none;
             flex-direction: column;
+            z-index: 10000;
             overflow: hidden;
         }
 
-        .chat-header {
+        .chatbot-widget.open {
+            display: flex;
+        }
+
+        .chatbot-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .chatbot-button.close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .chatbot-button.close:hover {
+            background: #e0e0e0;
+        }
+
+        .chatbot-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
             text-align: center;
         }
 
-        .chat-header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 18px;
         }
 
-        .chat-header p {
-            font-size: 14px;
+        .chatbot-header p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
             opacity: 0.9;
         }
 
-        .chat-messages {
+        .chatbot-messages {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
@@ -97,61 +132,53 @@
             background: #667eea;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.3s;
         }
 
         .button-option:hover {
             background: #764ba2;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .chat-input-container {
-            padding: 20px;
+        .chatbot-input-container {
+            padding: 15px;
             background: white;
             border-top: 1px solid #e0e0e0;
             display: flex;
             gap: 10px;
         }
 
-        .chat-input {
+        .chatbot-input {
             flex: 1;
-            padding: 12px 20px;
+            padding: 10px 15px;
             border: 2px solid #e0e0e0;
             border-radius: 25px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.3s;
         }
 
-        .chat-input:focus {
+        .chatbot-input:focus {
             border-color: #667eea;
         }
 
-        .send-button {
+        .chatbot-send {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 10px 20px;
             border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s;
         }
 
-        .send-button:hover {
+        .chatbot-send:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .send-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
 
         .loading {
@@ -168,47 +195,65 @@
             to { transform: rotate(360deg); }
         }
 
-        .timestamp {
-            font-size: 11px;
-            color: #999;
-            margin-top: 5px;
-            text-align: right;
-        }
-
-        .message.user .timestamp {
-            text-align: left;
+        /* Responsive */
+        @media (max-width: 480px) {
+            .chatbot-widget {
+                width: 100%;
+                height: 100%;
+                max-width: 100vw;
+                max-height: 100vh;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>🏠 Chatbot Inmobiliaria</h1>
-            <p>Asistente virtual - Prueba interactiva</p>
+    <!-- Botón flotante para abrir el chatbot -->
+    <button class="chatbot-button" id="chatbotToggle" onclick="toggleChatbot()">
+        💬
+    </button>
+
+    <!-- Widget del chatbot -->
+    <div class="chatbot-widget" id="chatbotWidget">
+        <div class="chatbot-header">
+            <button class="chatbot-button close" onclick="toggleChatbot()">✕</button>
+            <h3>🏠 Inmobiliaria en Equipo</h3>
+            <p>Asistente virtual</p>
         </div>
         
-        <div class="chat-messages" id="chatMessages">
+        <div class="chatbot-messages" id="chatbotMessages">
             <!-- Los mensajes aparecerán aquí -->
         </div>
         
-        <div class="chat-input-container">
+        <div class="chatbot-input-container">
             <input 
                 type="text" 
-                id="chatInput" 
-                class="chat-input" 
+                id="chatbotInput" 
+                class="chatbot-input" 
                 placeholder="Escribe tu mensaje..."
                 autocomplete="off"
             />
-            <button id="sendButton" class="send-button">Enviar</button>
+            <button id="chatbotSend" class="chatbot-send" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
 
     <script>
-        // Variables globales
+        const API_BASE = 'http://localhost:3000'; // Cambia esto por tu URL del servidor
         let sessionId = null;
-        const API_BASE = 'http://localhost:3000';
 
-        // Inicializar sesión al cargar la página
+        // Toggle del chatbot
+        function toggleChatbot() {
+            const widget = document.getElementById('chatbotWidget');
+            widget.classList.toggle('open');
+            
+            if (widget.classList.contains('open') && !sessionId) {
+                initSession();
+            }
+        }
+
+        // Inicializar sesión
         async function initSession() {
             try {
                 const response = await fetch(`${API_BASE}/api/web/chat/session`, {
@@ -236,8 +281,12 @@
         }
 
         // Enviar mensaje
-        async function sendMessage(text) {
-            if (!text.trim()) return;
+        async function sendMessage(text = null) {
+            const input = document.getElementById('chatbotInput');
+            const sendBtn = document.getElementById('chatbotSend');
+            const messageText = text || input.value.trim();
+            
+            if (!messageText) return;
             
             if (!sessionId) {
                 await initSession();
@@ -245,11 +294,12 @@
             }
 
             // Mostrar mensaje del usuario
-            addMessage(text, false);
+            addMessage(messageText, false);
+            
+            // Limpiar input
+            input.value = '';
             
             // Deshabilitar input mientras se procesa
-            const input = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('sendButton');
             input.disabled = true;
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<div class="loading"></div>';
@@ -262,7 +312,7 @@
                     },
                     body: JSON.stringify({
                         sessionId: sessionId,
-                        message: text
+                        message: messageText
                     })
                 });
 
@@ -270,9 +320,6 @@
                 
                 // Mostrar respuesta del bot
                 addMessage(data.response.text, true, false, data.response.buttons);
-                
-                // Limpiar input
-                input.value = '';
             } catch (error) {
                 console.error('Error enviando mensaje:', error);
                 addMessage('❌ Error al enviar el mensaje. Intenta nuevamente.', false, true);
@@ -287,7 +334,7 @@
 
         // Agregar mensaje al chat
         function addMessage(text, isBot = false, isError = false, buttons = null) {
-            const messagesContainer = document.getElementById('chatMessages');
+            const messagesContainer = document.getElementById('chatbotMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
             
@@ -307,12 +354,10 @@
                 const buttonsContainer = document.createElement('div');
                 buttonsContainer.className = 'buttons-container';
                 
-                buttons.forEach((button, index) => {
+                buttons.forEach((button) => {
                     const btn = document.createElement('button');
                     btn.className = 'button-option';
-                    // Mostrar el label completo (ya incluye el número)
                     btn.textContent = button.label;
-                    // Enviar el value si existe, sino el label
                     const valueToSend = button.value !== undefined ? button.value : button.label;
                     btn.onclick = () => sendMessage(valueToSend);
                     buttonsContainer.appendChild(btn);
@@ -321,32 +366,17 @@
                 messageDiv.appendChild(buttonsContainer);
             }
             
-            // Agregar timestamp
-            const timestamp = document.createElement('div');
-            timestamp.className = 'timestamp';
-            timestamp.textContent = new Date().toLocaleTimeString();
-            messageDiv.appendChild(timestamp);
-            
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         // Event listeners
-        document.getElementById('sendButton').addEventListener('click', () => {
-            const input = document.getElementById('chatInput');
-            sendMessage(input.value);
-        });
-
-        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+        document.getElementById('chatbotInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                sendMessage(e.target.value);
+                sendMessage();
             }
         });
-
-        // Inicializar al cargar
-        initSession();
     </script>
 </body>
 </html>
-
 
