@@ -241,7 +241,30 @@ Sé empático, profesional y útil.`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ [AIService] Error en API ${this.config.provider}:`, response.status, errorText);
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          // Si no se puede parsear, usar el texto como está
+        }
+        
+        // Detectar error de cuota insuficiente
+        if (response.status === 429 && errorData.error?.code === 'insufficient_quota') {
+          console.error(`⚠️ [AIService] Cuota de OpenAI agotada. El servicio usará respuestas por defecto.`);
+          console.error(`💡 [AIService] Sugerencia: Configura PERPLEXITY_API_KEY como alternativa o actualiza tu plan de OpenAI.`);
+          
+          // Si hay Perplexity configurado, intentar usarlo como fallback
+          if (this.config.provider === 'openai' && process.env.PERPLEXITY_API_KEY) {
+            console.log(`🔄 [AIService] Intentando usar Perplexity como fallback...`);
+            this.config.provider = 'perplexity';
+            this.config.apiKey = process.env.PERPLEXITY_API_KEY;
+            this.config.model = 'llama-3.1-sonar-large-128k-online';
+            // Intentar nuevamente con Perplexity
+            return this.callAIAPI(messages);
+          }
+        } else {
+          console.error(`❌ [AIService] Error en API ${this.config.provider}:`, response.status, errorText);
+        }
         return null;
       }
 
