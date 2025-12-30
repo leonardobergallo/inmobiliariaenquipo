@@ -1,6 +1,6 @@
 /**
  * Servicio de Inteligencia Artificial para mejorar las respuestas del chatbot
- * Soporta OpenAI y Perplexity AI para generar respuestas más naturales e inteligentes
+ * Soporta OpenAI para generar respuestas más naturales e inteligentes
  * 
  * En TypeScript, a diferencia de JavaScript, tenemos tipado estático que nos ayuda
  * a detectar errores antes de ejecutar el código. Esto es especialmente útil
@@ -12,7 +12,7 @@ import { BotResponse, ChatState } from '../types';
 // Interfaz para las opciones de configuración del servicio de IA
 // En TypeScript definimos interfaces para estructurar nuestros datos
 interface AIServiceConfig {
-  provider: 'openai' | 'perplexity' | 'none';
+  provider: 'openai' | 'none';
   apiKey?: string;
   model?: string;
   temperature?: number;
@@ -30,19 +30,18 @@ interface ConversationContext {
 export class AIService {
   private config: AIServiceConfig;
   private openaiApiUrl = 'https://api.openai.com/v1/chat/completions';
-  private perplexityApiUrl = 'https://api.perplexity.ai/chat/completions';
 
   constructor() {
     // Leer configuración desde variables de entorno
     // En JavaScript usaríamos process.env directamente, pero TypeScript
     // nos ayuda a manejar valores undefined de forma más segura
-    const provider = (process.env.AI_PROVIDER || 'none') as 'openai' | 'perplexity' | 'none';
-    const apiKey = process.env.OPENAI_API_KEY || process.env.PERPLEXITY_API_KEY;
+    const provider = (process.env.AI_PROVIDER || 'none') as 'openai' | 'none';
+    const apiKey = process.env.OPENAI_API_KEY;
     
     this.config = {
-      provider: provider === 'openai' || provider === 'perplexity' ? provider : 'none',
+      provider: provider === 'openai' ? 'openai' : 'none',
       apiKey: apiKey,
-      model: process.env.AI_MODEL || (provider === 'openai' ? 'gpt-3.5-turbo' : 'llama-3.1-sonar-large-128k-online'),
+      model: process.env.AI_MODEL || 'gpt-3.5-turbo',
       temperature: parseFloat(process.env.AI_TEMPERATURE || '0.7'),
     };
 
@@ -50,9 +49,6 @@ export class AIService {
     if (!this.config.apiKey && process.env.OPENAI_API_KEY) {
       this.config.provider = 'openai';
       this.config.apiKey = process.env.OPENAI_API_KEY;
-    } else if (!this.config.apiKey && process.env.PERPLEXITY_API_KEY) {
-      this.config.provider = 'perplexity';
-      this.config.apiKey = process.env.PERPLEXITY_API_KEY;
     }
   }
 
@@ -221,7 +217,7 @@ Sé empático, profesional y útil.`;
    * Llama a la API de IA correspondiente
    */
   private async callAIAPI(messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>): Promise<string | null> {
-    const apiUrl = this.config.provider === 'openai' ? this.openaiApiUrl : this.perplexityApiUrl;
+    const apiUrl = this.openaiApiUrl;
     const apiKey = this.config.apiKey!;
 
     try {
@@ -251,17 +247,7 @@ Sé empático, profesional y útil.`;
         // Detectar error de cuota insuficiente
         if (response.status === 429 && errorData.error?.code === 'insufficient_quota') {
           console.error(`⚠️ [AIService] Cuota de OpenAI agotada. El servicio usará respuestas por defecto.`);
-          console.error(`💡 [AIService] Sugerencia: Configura PERPLEXITY_API_KEY como alternativa o actualiza tu plan de OpenAI.`);
-          
-          // Si hay Perplexity configurado, intentar usarlo como fallback
-          if (this.config.provider === 'openai' && process.env.PERPLEXITY_API_KEY) {
-            console.log(`🔄 [AIService] Intentando usar Perplexity como fallback...`);
-            this.config.provider = 'perplexity';
-            this.config.apiKey = process.env.PERPLEXITY_API_KEY;
-            this.config.model = 'llama-3.1-sonar-large-128k-online';
-            // Intentar nuevamente con Perplexity
-            return this.callAIAPI(messages);
-          }
+          console.error(`💡 [AIService] Sugerencia: Actualiza tu plan de OpenAI o verifica tu facturación.`);
         } else {
           console.error(`❌ [AIService] Error en API ${this.config.provider}:`, response.status, errorText);
         }

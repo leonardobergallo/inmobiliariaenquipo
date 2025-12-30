@@ -1,5 +1,5 @@
 /**
- * Servicio de búsqueda de propiedades usando IA (OpenAI o Perplexity)
+ * Servicio de búsqueda de propiedades usando IA (OpenAI)
  * Este servicio busca propiedades reales basándose en los criterios del cliente
  * 
  * En TypeScript, a diferencia de JavaScript, definimos interfaces para estructurar
@@ -20,27 +20,19 @@ export interface PropertyResult {
 
 export class PropertySearchService {
   private openaiApiKey: string | undefined;
-  private perplexityApiKey: string | undefined;
   private openaiApiUrl = 'https://api.openai.com/v1/chat/completions';
-  private perplexityApiUrl = 'https://api.perplexity.ai/chat/completions';
-  private useOpenAI: boolean;
 
   constructor() {
-    // Para búsquedas en internet, Perplexity es mejor porque busca en tiempo real
-    // Si tenemos Perplexity, usarlo; sino usar OpenAI
     this.openaiApiKey = process.env.OPENAI_API_KEY;
-    this.perplexityApiKey = process.env.PERPLEXITY_API_KEY;
-    // Priorizar Perplexity para búsquedas reales en internet
-    this.useOpenAI = !this.perplexityApiKey && !!this.openaiApiKey;
   }
 
   /**
-   * Busca propiedades usando IA (OpenAI o Perplexity) basándose en los criterios del lead
+   * Busca propiedades usando IA (OpenAI) basándose en los criterios del lead
    */
   async searchProperties(lead: Lead): Promise<PropertyResult[]> {
     // Si no hay API key configurada, retornar búsqueda simulada
-    if (!this.openaiApiKey && !this.perplexityApiKey) {
-      console.log('⚠️ [PropertySearch] No hay API key de IA configurada. Usando búsqueda simulada.');
+    if (!this.openaiApiKey) {
+      console.log('⚠️ [PropertySearch] No hay API key de OpenAI configurada. Usando búsqueda simulada.');
       return this.getSimulatedProperties(lead);
     }
 
@@ -48,7 +40,7 @@ export class PropertySearchService {
       // Construir query de búsqueda mejorada
       const searchQuery = this.buildSearchQuery(lead);
       
-      console.log(`🔍 [PropertySearch] Buscando con ${this.useOpenAI ? 'OpenAI' : 'Perplexity'}: ${searchQuery}`);
+      console.log(`🔍 [PropertySearch] Buscando con OpenAI: ${searchQuery}`);
 
       // Construir el prompt del sistema mejorado para búsqueda real en internet
       const systemPrompt = `Eres un experto en búsqueda de propiedades inmobiliarias en Argentina.
@@ -83,12 +75,10 @@ Si NO encuentras propiedades reales, responde: []
 
 Responde SOLO con un JSON array válido, sin texto adicional.`;
 
-      // Llamar a la API correspondiente
-      // Perplexity es mejor para búsquedas en internet en tiempo real
-      const apiUrl = this.useOpenAI ? this.openaiApiUrl : this.perplexityApiUrl;
-      const apiKey = this.useOpenAI ? this.openaiApiKey! : this.perplexityApiKey!;
-      // Usar modelo de Perplexity que busca en internet en tiempo real
-      const model = this.useOpenAI ? 'gpt-3.5-turbo' : 'llama-3.1-sonar-large-128k-online';
+      // Llamar a la API de OpenAI
+      const apiUrl = this.openaiApiUrl;
+      const apiKey = this.openaiApiKey!;
+      const model = 'gpt-3.5-turbo';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -110,14 +100,12 @@ Responde SOLO con un JSON array válido, sin texto adicional.`;
           ],
           temperature: 0.2, // Bajo para respuestas más precisas
           max_tokens: 2500, // Más tokens para incluir más propiedades
-          // Para Perplexity, el modelo ya busca en internet automáticamente
-          // No necesitamos parámetros adicionales
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ [PropertySearch] Error en API ${this.useOpenAI ? 'OpenAI' : 'Perplexity'}:`, response.status, errorText);
+        console.error(`❌ [PropertySearch] Error en API OpenAI:`, response.status, errorText);
         return this.getSimulatedProperties(lead);
       }
 
@@ -132,7 +120,7 @@ Responde SOLO con un JSON array válido, sin texto adicional.`;
       const content = data.choices?.[0]?.message?.content;
 
       if (!content) {
-        console.error(`❌ [PropertySearch] No se recibió contenido de ${this.useOpenAI ? 'OpenAI' : 'Perplexity'}`);
+        console.error(`❌ [PropertySearch] No se recibió contenido de OpenAI`);
         return this.getSimulatedProperties(lead);
       }
 
@@ -292,7 +280,7 @@ Responde SOLO con un JSON array válido con este formato:
   }
 
   /**
-   * Parsea una respuesta de texto de Perplexity y extrae información de propiedades
+   * Parsea una respuesta de texto de OpenAI y extrae información de propiedades
    */
   private parseTextResponse(text: string, lead: Lead): PropertyResult[] {
     const properties: PropertyResult[] = [];
