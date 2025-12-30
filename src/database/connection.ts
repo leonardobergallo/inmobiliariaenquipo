@@ -14,7 +14,7 @@ const poolConfig: PoolConfig = {
   },
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Aumentado a 10 segundos
 };
 
 // Crear pool de conexiones
@@ -36,6 +36,10 @@ export async function testConnection(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('❌ Error conectando a PostgreSQL:', error);
+    // En desarrollo, no bloquear si no hay conexión
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Continuando sin base de datos (modo desarrollo)');
+    }
     return false;
   }
 }

@@ -18,6 +18,38 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware CORS
+app.use((req: Request, res: Response, next) => {
+  // Permitir todos los orígenes (puedes restringir esto en producción)
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'https://inmobiliariaenquipo.vercel.app',
+    // Agrega aquí otros orígenes permitidos
+  ];
+  
+  // Si el origen está en la lista o es undefined (mismo origen), permitirlo
+  // En desarrollo, permitir todos los orígenes
+  if (process.env.NODE_ENV === 'development' || !origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Manejar preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 // Servir archivos estáticos (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -54,6 +86,11 @@ app.post('/api/web/chat/session', (req: Request, res: Response) => {
   }
 });
 
+// Handler OPTIONS para preflight
+app.options('/api/web/chat/session', (req: Request, res: Response) => {
+  res.status(200).end();
+});
+
 // Enviar mensaje
 app.post('/api/web/chat/message', async (req: Request, res: Response) => {
   try {
@@ -81,6 +118,11 @@ app.post('/api/web/chat/message', async (req: Request, res: Response) => {
   }
 });
 
+// Handler OPTIONS para preflight
+app.options('/api/web/chat/message', (req: Request, res: Response) => {
+  res.status(200).end();
+});
+
 // Obtener historial
 app.get('/api/web/chat/history/:sessionId', (req: Request, res: Response) => {
   try {
@@ -92,6 +134,11 @@ app.get('/api/web/chat/history/:sessionId', (req: Request, res: Response) => {
   }
 });
 
+// Handler OPTIONS para preflight
+app.options('/api/web/chat/history/:sessionId', (req: Request, res: Response) => {
+  res.status(200).end();
+});
+
 // Limpiar sesión
 app.delete('/api/web/chat/session/:sessionId', (req: Request, res: Response) => {
   try {
@@ -101,6 +148,11 @@ app.delete('/api/web/chat/session/:sessionId', (req: Request, res: Response) => 
   } catch (error) {
     res.status(500).json({ error: 'Error clearing session' });
   }
+});
+
+// Handler OPTIONS para preflight
+app.options('/api/web/chat/session/:sessionId', (req: Request, res: Response) => {
+  res.status(200).end();
 });
 
 // ============================================
@@ -265,7 +317,12 @@ let dbInitialized = false;
   dbInitialized = await initializeDatabase();
   
   if (!dbInitialized) {
-    console.error('❌ Error inicializando base de datos. El servidor puede no funcionar correctamente.');
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Base de datos no disponible. El servidor continuará pero algunas funcionalidades pueden no estar disponibles.');
+      console.warn('⚠️ Para habilitar la base de datos, configura DATABASE_URL en tu archivo .env');
+    } else {
+      console.error('❌ Error inicializando base de datos. El servidor puede no funcionar correctamente.');
+    }
   } else {
     console.log('✅ Base de datos inicializada correctamente');
   }
@@ -278,11 +335,15 @@ let dbInitialized = false;
 // Solo iniciar servidor si no estamos en Vercel (serverless)
 if (process.env.VERCEL !== '1' && require.main === module) {
   async function startServer() {
-    // Esperar a que la base de datos se inicialice
-    while (!dbInitialized) {
+    // Esperar un máximo de 5 segundos para la inicialización de BD
+    const maxWaitTime = 5000;
+    const startTime = Date.now();
+    
+    while (!dbInitialized && (Date.now() - startTime) < maxWaitTime) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
+    // Iniciar servidor incluso si la BD no está lista (especialmente en desarrollo)
     app.listen(PORT, () => {
       console.log(`🚀 Chatbot inmobiliario iniciado en puerto ${PORT}`);
       console.log(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
@@ -290,6 +351,10 @@ if (process.env.VERCEL !== '1' && require.main === module) {
       console.log(`📲 App API: http://localhost:${PORT}/api/app/chat`);
       console.log(`👨‍💼 Admin API: http://localhost:${PORT}/api/admin/leads`);
       console.log(`🖥️  Panel Admin: http://localhost:${PORT}/admin.html`);
+      
+      if (!dbInitialized) {
+        console.warn('⚠️ Servidor iniciado sin base de datos. Algunas funcionalidades pueden no estar disponibles.');
+      }
     });
   }
 
